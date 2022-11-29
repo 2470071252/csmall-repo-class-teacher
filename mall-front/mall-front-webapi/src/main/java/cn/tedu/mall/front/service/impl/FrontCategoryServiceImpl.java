@@ -83,6 +83,7 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
             BeanUtils.copyProperties(categoryStandardVO,frontCategoryEntity);
             // 获取当前分类对象的父分类id,用作map元素的key值(如果父分类id为0,就是一级分类)
             Long parentId=frontCategoryEntity.getParentId();
+
             // 判断这个父分类id是否已经存在于map
             if(!map.containsKey(parentId)){
                 // 如果map中没有当前遍历对象父分类id作为key的元素
@@ -100,7 +101,8 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
         // 第二步:
         // 将子分类对象添加到对应的父分类对象的childrens属性中
         // 先获取所有一级分类对象,也就是父分类id为0的对象
-        List<FrontCategoryEntity> firstLevels=map.get(0);
+        // Key是Long类型,一定要写0L
+        List<FrontCategoryEntity> firstLevels=map.get(0L);
         // 判断一级分类集合如果为null(或没有元素),直接抛出异常,终止程序
         if (firstLevels==null || firstLevels.isEmpty()){
             throw new CoolSharkServiceException(
