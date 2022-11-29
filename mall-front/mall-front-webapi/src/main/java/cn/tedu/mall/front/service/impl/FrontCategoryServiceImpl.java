@@ -114,6 +114,19 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
                 // 如果二级分类对象缺失,可以直接跳过本次循环剩余内容,继续下次循环
                 continue;
             }
+            // 确定二级分类对象后,遍历二级分类对象集合
+            for(FrontCategoryEntity twoLevel :  secondLevels){
+                // 获取当前二级分类对象的id,作为三级分类的父id
+                Long thirdLevelParentId=twoLevel.getId();  //getId()!!!!!!!
+                // 根据这个id获得这个二级分类对象关联的所有三级分类对象集合
+                List<FrontCategoryEntity> thirdLevels=map.get(thirdLevelParentId);
+                // 再判断这个三级分类集合是否为null
+                if(thirdLevels==null  || thirdLevels.isEmpty()){
+                    log.warn("当前二级分类对象没有三级分类内容:{}",thirdLevelParentId);
+                    continue;
+                }
+
+            }
         }
         return null;
     }
