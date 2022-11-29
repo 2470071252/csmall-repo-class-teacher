@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -57,8 +58,12 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
         // 整个转换和关联的过程比较复杂,我们编写一个方法来完成
         FrontCategoryTreeVO<FrontCategoryEntity> treeVO=
                                             initTree(categoryStandardVOs);
-
-        return null;
+        // 上面方法完成了三级分类树的构建,下面要将treeVO保存到Redis中
+        redisTemplate.boundValueOps(CATEGORY_TREE_KEY)
+                .set(treeVO,1, TimeUnit.MINUTES);
+        // 上面时间定义了1分钟,是学习测试比较合适的,上线项目中,保存时间会比较长,例如24小时甚至更多
+        // 最后也别忘了返回treeVO
+        return treeVO;
     }
 
     private FrontCategoryTreeVO<FrontCategoryEntity> initTree(
@@ -125,9 +130,20 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
                     log.warn("当前二级分类对象没有三级分类内容:{}",thirdLevelParentId);
                     continue;
                 }
-
+                // 将三级分类对象集合添加到关联的二级分类对象childrens属性中
+                twoLevel.setChildrens(thirdLevels);
             }
+            // 将二级分类对象集合添加到关联的一级分类对象childrens属性中
+            oneLevel.setChildrens(secondLevels);
         }
-        return null;
+        // 到此为止,所有的分类对象都应该确认了自己和父\子分类对象的关联关系
+        // 最后我们要将一级分类的集合firstLevels,
+        // 赋值给FrontCategoryTreeVO<FrontCategoryEntity>的list属性
+        // 实例化对象
+        FrontCategoryTreeVO<FrontCategoryEntity> treeVO=
+                new FrontCategoryTreeVO<>();
+        treeVO.setCategories(firstLevels);
+        // 最后千万别忘了返回  treeVO!!!!
+        return treeVO;
     }
 }
