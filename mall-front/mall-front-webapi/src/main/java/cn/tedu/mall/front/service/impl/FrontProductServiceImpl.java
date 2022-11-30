@@ -3,6 +3,8 @@ package cn.tedu.mall.front.service.impl;
 import cn.tedu.mall.common.restful.JsonPage;
 import cn.tedu.mall.front.service.IFrontProductService;
 import cn.tedu.mall.pojo.product.vo.*;
+import cn.tedu.mall.product.service.front.IForFrontAttributeService;
+import cn.tedu.mall.product.service.front.IForFrontSkuService;
 import cn.tedu.mall.product.service.front.IForFrontSpuService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -16,6 +18,13 @@ public class FrontProductServiceImpl implements IFrontProductService {
 
     @DubboReference
     private IForFrontSpuService dubboSpuService;
+    // 根据spuId查询sku信息的dubbo调用对象
+    @DubboReference
+    private IForFrontSkuService dubboSkuService;
+    // 根据spuId查询属性的dubbo调用对象
+    @DubboReference
+    private IForFrontAttributeService dubboAttributeService;
+
 
     // 根据分类id分页查询spu列表
     @Override
@@ -30,6 +39,7 @@ public class FrontProductServiceImpl implements IFrontProductService {
 
     @Override
     public SpuStandardVO getFrontSpuById(Long id) {
+
         return null;
     }
 
