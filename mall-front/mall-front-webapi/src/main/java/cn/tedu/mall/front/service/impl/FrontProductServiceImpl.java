@@ -37,24 +37,31 @@ public class FrontProductServiceImpl implements IFrontProductService {
         return jsonPage;
     }
 
+    // 根据spuId 查询spu信息
     @Override
     public SpuStandardVO getFrontSpuById(Long id) {
-
-        return null;
+        SpuStandardVO spuStandardVO = dubboSpuService.getSpuById(id);
+        return spuStandardVO;
     }
-
+    // 根据spuId查询sku列表
     @Override
     public List<SkuStandardVO> getFrontSkusBySpuId(Long spuId) {
-        return null;
+        List<SkuStandardVO> list = dubboSkuService.getSkusBySpuId(spuId);
+        return list;
     }
 
+    // 根据spuId查询spuDetail
     @Override
     public SpuDetailStandardVO getSpuDetail(Long spuId) {
-        return null;
+        SpuDetailStandardVO spuDetailStandardVO =
+                                dubboSpuService.getSpuDetailById(spuId);
+        return spuDetailStandardVO;
     }
-
+    // 根据spuId查询当前商品所有属性\规格信息
     @Override
     public List<AttributeStandardVO> getSpuAttributesBySpuId(Long spuId) {
-        return null;
+        List<AttributeStandardVO> list =
+                dubboAttributeService.getSpuAttributesBySpuId(spuId);
+        return list;
     }
 }
