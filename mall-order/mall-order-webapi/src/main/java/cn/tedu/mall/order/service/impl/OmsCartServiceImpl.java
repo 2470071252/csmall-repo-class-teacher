@@ -86,7 +86,12 @@ public class OmsCartServiceImpl implements IOmsCartService {
 
     @Override
     public void removeAllCarts() {
-
+        Long userId=getUserId();
+        int rows=omsCartMapper.deleteCartsByUserId(userId);
+        if(rows==0){
+            throw new CoolSharkServiceException(
+                    ResponseCode.NOT_FOUND,"您的购物车是空的!");
+        }
     }
 
     @Override
@@ -94,9 +99,16 @@ public class OmsCartServiceImpl implements IOmsCartService {
 
     }
 
+    // 修改购物车中商品数量的业务逻辑层方法
     @Override
     public void updateQuantity(CartUpdateDTO cartUpdateDTO) {
-
+        // 因为执行修改的mapper方法参数是OmsCart类型
+        // 所以要先实例化OmsCart
+        OmsCart omsCart=new OmsCart();
+        // 然后将参数cartUpdateDTO同名属性赋值到omsCart
+        BeanUtils.copyProperties(cartUpdateDTO,omsCart);
+        // omsCart执行修改
+        omsCartMapper.updateQuantityById(omsCart);
     }
 
     // 业务逻辑层中有获得当前登录用户信息的需求

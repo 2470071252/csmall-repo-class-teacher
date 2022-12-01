@@ -5,6 +5,7 @@ import cn.tedu.mall.common.restful.JsonResult;
 import cn.tedu.mall.order.service.IOmsCartService;
 import cn.tedu.mall.order.utils.WebConsts;
 import cn.tedu.mall.pojo.order.dto.CartAddDTO;
+import cn.tedu.mall.pojo.order.dto.CartUpdateDTO;
 import cn.tedu.mall.pojo.order.vo.CartStandardVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -69,6 +70,27 @@ public class OmsCartController {
         return JsonResult.ok("删除完成!");
     }
 
+    @PostMapping("/delete/all")
+    @ApiOperation("清空当前登录用户的购物车信息")
+    // 当@PreAuthorize注解后面要判断的权限内容以ROLE_开头时
+    // 表示我们要判断的权限实际上是SpringSecurity框架约定的角色名称
+    // 判断这样的角色时,我们可以在@PreAuthorize注解的()里使用hasRole来简化对角色的判断
+    // hasRole('user')这样的判断实际上就是检查登录用户是否包含ROLE_user的权限
+    // 也就是下面两种写法判断判断登录用户权限是等价的
+    // @PreAuthorize("hasAuthority('ROLE_user')")
+    @PreAuthorize("hasRole('user')")
+    public JsonResult removeCartsByUserId(){
+        omsCartService.removeAllCarts();
+        return JsonResult.ok("购物车已清空");
+    }
+
+    @PostMapping("/update/quantity")
+    @ApiOperation("修改购物车中sku的数量")
+    @PreAuthorize("hasRole('user')")
+    public JsonResult updateQuantity(@Validated CartUpdateDTO cartUpdateDTO){
+        omsCartService.updateQuantity(cartUpdateDTO);
+        return JsonResult.ok("修改完成!");
+    }
 
 
 
