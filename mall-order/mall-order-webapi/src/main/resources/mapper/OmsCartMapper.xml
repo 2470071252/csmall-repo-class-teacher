@@ -71,6 +71,25 @@
 
     </update>
 
+    <!--  根据用户id查询该用户购物车中的sku信息 -->
+    <!--
+           我们使用resultType声明返回值类型时
+           Mybatis内部会按照驼峰命名法的命名规则,自动生成列名和属性名的映射
+           列名           属性名
+           id              id
+           user_id         userId
+           sku_id          skuId
+           title           title
+    -->
+    <select id="selectCartsByUserId"
+            resultType="cn.tedu.mall.pojo.order.vo.CartStandardVO">
+        select
+            <include refid="SimpleQueryFields" />
+        from
+            oms_cart
+        where
+            user_id=#{id}
+    </select>
 
 </mapper>
 
