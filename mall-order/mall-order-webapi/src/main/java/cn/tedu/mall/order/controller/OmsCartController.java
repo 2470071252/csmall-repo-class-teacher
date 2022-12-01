@@ -47,12 +47,26 @@ public class OmsCartController {
     })
     @PreAuthorize("hasAuthority('ROLE_user')")
     public JsonResult<JsonPage<CartStandardVO>> listCartsByPage(
+            // 控制器方法参数可以设置默认值,在调用时如果这个参数没有值则会使用默认值
+            // @RequestParam注解来实现,WebConsts是我们自定定义的包含常量的类
             @RequestParam(required = false,defaultValue = WebConsts.DEFAULT_PAGE)
                                             Integer page,
             @RequestParam(required = false,defaultValue = WebConsts.DEFAULT_PAGE_SIZE)
                                             Integer pageSize){
+        JsonPage<CartStandardVO> jsonPage=
+                omsCartService.listCarts(page,pageSize);
+        return JsonResult.ok(jsonPage);
+    }
 
-        return null;
+
+    @PostMapping("/delete")
+    @ApiOperation("根据id数组删除购物车sku信息")
+    @ApiImplicitParam(value = "要删除的id数组",name="ids",
+                                required = true,dataType = "array")
+    @PreAuthorize("hasAuthority('ROLE_user')")
+    public JsonResult removeCartsByIds(Long[] ids){
+        omsCartService.removeCart(ids);
+        return JsonResult.ok("删除完成!");
     }
 
 
