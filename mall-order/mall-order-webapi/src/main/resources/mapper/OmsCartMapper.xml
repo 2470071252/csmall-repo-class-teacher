@@ -59,8 +59,17 @@
             #{price},
             #{quantity}
         )
-
     </insert>
+    <!-- 修改购物车中的sku商品数量  -->
+    <update id="updateQuantityById">
+        update
+            oms_cart
+        set
+            quantity=#{quantity}
+        where
+            id=#{id}
+
+    </update>
 
 
 </mapper>
