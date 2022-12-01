@@ -11,6 +11,7 @@ import cn.tedu.mall.pojo.order.dto.CartUpdateDTO;
 import cn.tedu.mall.pojo.order.model.OmsCart;
 import cn.tedu.mall.pojo.order.vo.CartStandardVO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +30,29 @@ public class OmsCartServiceImpl implements IOmsCartService {
         // 要查询当前登录用户的购物车中是否已经包含指定商品,需要先获得当前用户id
         // 利用封装好的方法直接从SpringSecurity上下文中获取
         Long userId=getUserId();
+        // 根据用户Id和商品skuId,查询商品信息
+        OmsCart omsCart=omsCartMapper.selectExistsCart(userId,cartDTO.getSkuId());
+        // 判断查询出的omsCart是否为null
+        if(omsCart == null){
+            // omsCart为null,表示当前用户购物车中没有这个sku商品
+            // 所以要执行新增操作,新增操作需要一个OmsCart对象
+            OmsCart newCart=new OmsCart();
+            // 将参数cartDTO中和OmsCart中同名的属性赋值到newCart对象
+            BeanUtils.copyProperties(cartDTO,newCart);
+            // cartDTO中没有userId属性,需要单独赋值
+            newCart.setUserId(userId);
+            // 执行新增操作
+            omsCartMapper.saveCart(newCart);
+        }else{
+            // 如果omsCart不是null,表示当前用户购物车中已经有这个商品了
+            // 我们需要做的就是将购物车中原有的数量和新增的数量相加,保存到数据库中
+            // 购物车中原有的数量是omsCart.getQuantity(),新增的数量是cartDTO.getQuantity()
+            // 所以我们可以将这两个数量相加的和赋值给omsCart属性
+            omsCart.setQuantity(omsCart.getQuantity()+cartDTO.getQuantity());
+            // 确定了数量之后,调用我们的持久层方法进行修改
+            omsCartMapper.updateQuantityById(omsCart);
+
+        }
 
     }
 
