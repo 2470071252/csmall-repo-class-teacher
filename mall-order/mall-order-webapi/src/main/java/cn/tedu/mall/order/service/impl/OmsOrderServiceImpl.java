@@ -114,12 +114,20 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
             // 执行删除
             omsCartService.removeUserCarts(omsCart);
         }
-
-
-
-
+        // 3.执行新增订单
+        omsOrderMapper.insertOrder(order);
+        // 4.新增订单项(批量新增集合中所有订单项数据)
+        omsOrderItemMapper.insertOrderItemList(omsOrderItems);
         // 第三部分:准备返回值,返回给前端
-        return null;
+        // 实例化返回值类型对象
+        OrderAddVO addVO=new OrderAddVO();
+        // 给各属性赋值
+        addVO.setId(order.getId());
+        addVO.setSn(order.getSn());
+        addVO.setCreateTime(order.getGmtCreate());
+        addVO.setPayAmount(order.getAmountOfActualPay());
+        // 最后千万别忘了返回 addVO !!!!
+        return addVO;
     }
     // 为order对象补全属性值的方法
     private void loadOrder(OmsOrder order) {
