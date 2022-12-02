@@ -10,9 +10,11 @@ import cn.tedu.mall.order.service.IOmsCartService;
 import cn.tedu.mall.order.service.IOmsOrderService;
 import cn.tedu.mall.order.utils.IdGeneratorUtils;
 import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
+import cn.tedu.mall.pojo.order.dto.OrderItemAddDTO;
 import cn.tedu.mall.pojo.order.dto.OrderListTimeDTO;
 import cn.tedu.mall.pojo.order.dto.OrderStateUpdateDTO;
 import cn.tedu.mall.pojo.order.model.OmsOrder;
+import cn.tedu.mall.pojo.order.model.OmsOrderItem;
 import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 import cn.tedu.mall.pojo.order.vo.OrderDetailVO;
 import cn.tedu.mall.pojo.order.vo.OrderListVO;
@@ -29,6 +31,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 //订单管理模块的业务逻辑层实现类,因为后面秒杀模块需要生成订单的功能,所以注册到dubbo
@@ -61,6 +65,34 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
         // orderAddDTO中实际上只有一部分内容,order对象属性并不完全
         // 所以我们要编写一个方法,完成order未赋值属性的收集或生成
         loadOrder(order);
+        // 到此为止,order对象的所有信息就收集完毕了
+        // 下面要将参数orderAddDTO中包含的订单项集合属性:orderItems进行信息收集和赋值
+        // 先从参数中获得这个集合
+        List<OrderItemAddDTO> itemAddDTOs=orderAddDTO.getOrderItems();
+        if(itemAddDTOs == null || itemAddDTOs.isEmpty()){
+            // 如果订单项集合中没有商品,抛出异常终止程序
+            throw new CoolSharkServiceException(ResponseCode.BAD_REQUEST,
+                    "订单中必须至少包含一件商品");
+        }
+        // 我们最终的目标是将当前订单中包含的订单项新增到数据库
+        // 当前集合泛型类型是OrderItemAddDTO,而我们向数据库进行订单项批量新增操作的泛型是OmsOrderItem
+        // 所以我们要编写将上面集合转换为List<OmsOrderItem>类型的方法
+        List<OmsOrderItem> omsOrderItems=new ArrayList<>();
+        // 遍历itemAddDTOs
+        for(OrderItemAddDTO addDTO : itemAddDTOs){
+            // 实例化最终需要的OmsOrderItem类型对象
+            OmsOrderItem orderItem=new OmsOrderItem();
+            // 将addDTO同名属性赋值到orderItem中
+            BeanUtils.copyProperties(addDTO,orderItem);
+            // 将addDTO对象中没有的id属性和orderId属性赋值
+            // 利用Leaf生成订单项的id并赋值
+            Long itemId=IdGeneratorUtils.getDistributeId("order_item");
+            orderItem.setId(itemId);
+            // 赋值订单id
+            orderItem.setOrderId(order.getId());
+            // orderItem的所有值赋值完成,将这个对象添加到集合中
+            omsOrderItems.add(orderItem);
+        }
 
 
         // 第二部分:执行数据库操作指令
