@@ -97,6 +97,12 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
         // 后端代码对实际应付金额进行验算,以求和前端数据一致
         // 实际应付金额=原价-优惠+运费
         // 金钱相关数据使用BigDecimal类型,防止浮点偏移的误差,取消取值范围限制
+        BigDecimal price=order.getAmountOfOriginalPrice();
+        BigDecimal freight=order.getAmountOfFreight();
+        BigDecimal discount=order.getAmountOfDiscount();
+        BigDecimal actualPay=price.subtract(discount).add(freight);
+        // 最后将计算完成的金额赋值到order对象
+        order.setAmountOfActualPay(actualPay);
 
     }
 
