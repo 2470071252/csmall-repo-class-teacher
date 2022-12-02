@@ -10,4 +10,5 @@ public class IdGeneratorUtils {
         String url = "http://127.0.0.1:9090/api/segment/get/" + key;
         return restTemplate.getForObject(url, Long.class);
     }
+
 }
