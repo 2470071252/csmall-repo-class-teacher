@@ -13,6 +13,7 @@ import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
 import cn.tedu.mall.pojo.order.dto.OrderItemAddDTO;
 import cn.tedu.mall.pojo.order.dto.OrderListTimeDTO;
 import cn.tedu.mall.pojo.order.dto.OrderStateUpdateDTO;
+import cn.tedu.mall.pojo.order.model.OmsCart;
 import cn.tedu.mall.pojo.order.model.OmsOrder;
 import cn.tedu.mall.pojo.order.model.OmsOrderItem;
 import cn.tedu.mall.pojo.order.vo.OrderAddVO;
@@ -92,10 +93,31 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
             orderItem.setOrderId(order.getId());
             // orderItem的所有值赋值完成,将这个对象添加到集合中
             omsOrderItems.add(orderItem);
+            // 第二部分:执行数据库操作指令
+            // 1.减少库存
+            // 当前正在遍历的对象就是一个包含skuId和减少库存数的对象
+            // 先获取skuId
+            Long skuId=orderItem.getSkuId();
+            // dubbo调用减少库存的方法
+            int rows=dubboSkuService.reduceStockNum(skuId,orderItem.getQuantity());
+            // 判断rows值是否为0
+            if(rows==0){
+                log.error("商品库存不足,skuId:{}",skuId);
+                // 抛出异常终止程序,触发seata分布式事务回滚
+                throw new CoolSharkServiceException(ResponseCode.BAD_REQUEST,
+                        "库存不足");
+            }
+            // 2.删除勾选的购物车的商品
+            OmsCart omsCart=new OmsCart();
+            omsCart.setUserId(order.getUserId());
+            omsCart.setSkuId(skuId);
+            // 执行删除
+            omsCartService.removeUserCarts(omsCart);
         }
 
 
-        // 第二部分:执行数据库操作指令
+
+
         // 第三部分:准备返回值,返回给前端
         return null;
     }
