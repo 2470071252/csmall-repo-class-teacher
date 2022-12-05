@@ -155,6 +155,71 @@
         ORDER BY oo.gmt_modified DESC
     </select>
 
+    <!--
+        利用动态sql语句,实现对订单字段的修改
+        参数是OmsOrder类型,必须包含id属性值,id属性值不可修改
+     -->
+    <!--
+        OmsOrder对象动态修改数据库中数据的sql语句
+        Mybatis框架根据OmsOrder对象属性的非空状态,生成sql语句,使用<set>标签
+        1.在<set>表单的位置生成set关键字
+        2.在<set></set>标签之间,动态生成的sql语句
+            如果生成的内容最后一个字符是","就将它删除
+    -->
+    <update id="updateOrderById">
+        update oms_order
+        <set>
+            <if test="contactName!=null">
+                contact_name=#{contactName},
+            </if>
+            <if test="mobilePhone!=null">
+                mobile_phone=#{mobilePhone},
+            </if>
+            <if test="telephone!=null">
+                telephone=#{telephone},
+            </if>
+            <if test="streetCode!=null">
+                street_code=#{streetCode},
+            </if>
+            <if test="streetName!=null">
+                street_name=#{streetName},
+            </if>
+            <if test="detailedAddress!=null">
+                detailed_address=#{detailedAddress},
+            </if>
+            <if test="tag!=null">
+                tag=#{tag},
+            </if>
+            <if test="paymentType!=null">
+                payment_type=#{paymentType},
+            </if>
+            <if test="state!=null">
+                state=#{state},
+            </if>
+            <if test="rewardPoint!=null">
+                reward_point=#{rewardPoint},
+            </if>
+            <if test="amountOfOriginalPrice!=null">
+                amount_of_original_price=#{amountOfOriginalPrice},
+            </if>
+            <if test="amountOfFreight!=null">
+                amount_of_freight=#{amountOfFreight},
+            </if>
+            <if test="amountOfDiscount!=null">
+                amount_of_discount=#{amountOfDiscount},
+            </if>
+            <if test="amountOfActualPay!=null">
+                amount_of_actual_pay=#{amountOfActualPay},
+            </if>
+            <if test="gmtPay!=null">
+                gmt_pay=#{gmtPay},
+            </if>
+        </set>
+        where
+            id=#{id}
+    </update>
+
+
 
 
 </mapper>
