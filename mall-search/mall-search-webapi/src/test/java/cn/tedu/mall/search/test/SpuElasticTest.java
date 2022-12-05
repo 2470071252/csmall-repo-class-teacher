@@ -1,6 +1,7 @@
 package cn.tedu.mall.search.test;
 
 
+import cn.tedu.mall.search.repository.SpuForElasticRepository;
 import cn.tedu.mall.search.service.ISearchService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,5 +19,7 @@ public class SpuElasticTest {
         System.out.println("ok");
     }
 
+    @Autowired
+    private SpuForElasticRepository spuRepository;
 
 }
