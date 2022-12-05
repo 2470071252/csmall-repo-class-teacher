@@ -35,6 +35,4 @@ public class SpuElasticTest {
         spus.forEach(spu -> System.out.println(spu));
     }
 
-
-
 }

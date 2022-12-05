@@ -2,6 +2,7 @@ package cn.tedu.mall.search.repository;
 
 
 import cn.tedu.mall.pojo.search.entity.SpuForElastic;
+import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +14,19 @@ public interface SpuForElasticRepository extends
 
     // 查询title字段包含指定关键字(分词)的spu数据
     Iterable<SpuForElastic> querySpuForElasticsByTitleMatches(String title);
+
+    @Query("{\n" +
+            "    \"bool\": {\n" +
+            "      \"should\": [\n" +
+            "        { \"match\": { \"name\": \"?0\"}},\n" +
+            "        { \"match\": { \"title\": \"?0\"}},\n" +
+            "        { \"match\": { \"description\": \"?0\"}},\n" +
+            "        { \"match\": { \"category_name\": \"?0\"}}\n" +
+            "        ]\n" +
+            "     }\n" +
+            "}")
+    // 上面指定了查询语句的情况下,自定义方法的方法名就可以随意起名了
+    Iterable<SpuForElastic> querySearch(String keyword);
 }
 
 
