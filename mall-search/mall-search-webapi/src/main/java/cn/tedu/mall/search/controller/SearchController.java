@@ -31,6 +31,7 @@ public class SearchController {
             @ApiImplicitParam(value = "页码",name="page", example = "1"),
             @ApiImplicitParam(value = "每页条数",name="pageSize", example = "2")
     })
+
     public JsonResult<JsonPage<SpuForElastic>> searchByKeyword(
             String keyword, Integer page,Integer pageSize){
         JsonPage<SpuForElastic> jsonPage=
