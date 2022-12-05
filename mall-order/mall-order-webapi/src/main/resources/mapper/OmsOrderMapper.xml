@@ -106,7 +106,13 @@
         <result column="gmt_pay" property="gmtPay" />
         <result column="gmt_create" property="gmtCreate" />
         <result column="gmt_modified" property="gmtModified" />
-
+        <!-- OrderListVO类型中包含订单项的集合,需要进行映射编写  -->
+        <!--  包含集合的映射使用 collection 标签 -->
+        <!--
+            property(必须): 指定要映射的集合类型的属性名称
+            javaType(可选): 指定当前集合的类型,默认类型是List,如果匹配无需编写
+            ofType(必须):   指定集合的泛型类型
+        -->
         <collection property="orderItems"
                     ofType="cn.tedu.mall.pojo.order.vo.OrderItemListVO">
             <id     column="ooi_id" property="id" />

@@ -173,9 +173,19 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
 
     }
 
+    // 分页和查询当前登录用户,指定时间范围内所有订单
+    // 默认查询最近一个月订单的信息,查询的返回值OrderListVO,是包含订单和订单中商品信息的对象
+    // 查询OrderListVO的持久层是查询多张表返回值的特殊关联查询
     @Override
     public JsonPage<OrderListVO> listOrdersBetweenTimes(OrderListTimeDTO orderListTimeDTO) {
+        // 方法一开始,需要先确定查询的时间范围,默认是一个月内
+        // 要判断orderListTimeDTO参数中开始时间和结束时间是否有null值
+        validateTimeAndLoadTime(orderListTimeDTO);
         return null;
+    }
+
+    private void validateTimeAndLoadTime(OrderListTimeDTO orderListTimeDTO) {
+
     }
 
     @Override
