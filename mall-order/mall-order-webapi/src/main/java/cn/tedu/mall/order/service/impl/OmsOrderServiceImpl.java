@@ -1,5 +1,6 @@
 package cn.tedu.mall.order.service.impl;
 
+import ch.qos.logback.core.pattern.color.BoldYellowCompositeConverter;
 import cn.tedu.mall.common.exception.CoolSharkServiceException;
 import cn.tedu.mall.common.pojo.domain.CsmallAuthenticationInfo;
 import cn.tedu.mall.common.restful.JsonPage;
@@ -20,6 +21,8 @@ import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 import cn.tedu.mall.pojo.order.vo.OrderDetailVO;
 import cn.tedu.mall.pojo.order.vo.OrderListVO;
 import cn.tedu.mall.product.service.order.IForOrderSkuService;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -32,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -181,11 +185,40 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
         // 方法一开始,需要先确定查询的时间范围,默认是一个月内
         // 要判断orderListTimeDTO参数中开始时间和结束时间是否有null值
         validateTimeAndLoadTime(orderListTimeDTO);
-        return null;
+        // 将userId赋值到参数中
+        orderListTimeDTO.setUserId(getUserId());
+        // 设置分页条件
+        PageHelper.startPage(orderListTimeDTO.getPage(),
+                                orderListTimeDTO.getPageSize());
+        List<OrderListVO> list=omsOrderMapper
+                                .selectOrdersBetweenTimes(orderListTimeDTO);
+        // 最后返回JsonPage
+        return JsonPage.restPage(new PageInfo<>(list));
     }
 
     private void validateTimeAndLoadTime(OrderListTimeDTO orderListTimeDTO) {
-
+        // 获取参数对象中的开始时间和结束时间
+        LocalDateTime start=orderListTimeDTO.getStartTime();
+        LocalDateTime end= orderListTimeDTO.getEndTime();
+        // 为了使业务更简单,我们设计start或end任意一个值为null,就查询最近一个月订单
+        if(start == null  ||  end == null){
+            // start设置为一个月前的时间
+            start=LocalDateTime.now().minusMonths(1);
+            // end设置为现在即可
+            end=LocalDateTime.now();
+            // 将确定好值的时间赋到参数中
+            orderListTimeDTO.setStartTime(start);
+            orderListTimeDTO.setEndTime(end);
+        }else{
+            // 如果start和end都非null
+            // 就要判断,如果end小于了start就要抛出异常
+            if(end.toInstant(ZoneOffset.of("+8")).toEpochMilli()<
+                    start.toInstant(ZoneOffset.of("+8")).toEpochMilli()){
+                // 如果结束时间小于开始时间,就要抛出异常
+                throw new CoolSharkServiceException(ResponseCode.BAD_REQUEST,
+                        "结束时间应大于起始时间");
+            }
+        }
     }
 
     @Override
