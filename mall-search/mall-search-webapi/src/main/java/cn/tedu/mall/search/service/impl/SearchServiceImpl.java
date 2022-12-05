@@ -4,10 +4,11 @@ import cn.tedu.mall.common.restful.JsonPage;
 import cn.tedu.mall.pojo.product.model.Spu;
 import cn.tedu.mall.pojo.search.entity.SpuForElastic;
 import cn.tedu.mall.product.service.front.IForFrontSpuService;
-import cn.tedu.mall.search.mapper.SpuForElasticRepository;
+import cn.tedu.mall.search.repository.SpuForElasticRepository;
 import cn.tedu.mall.search.service.ISearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +31,7 @@ public class SearchServiceImpl implements ISearchService {
         // 每次循环的操作就是将当前从数据库中查询的数据新增到ES
         // 循环条件应该是总页数,但是总页数需要查询一次之后才能得知,所以我们使用do-while循环
         int i=1;     // 循环变量,从1开始,因为可以直接当页码使用
-        int page=5;  // 总页数,也是循环条件,是循环操作运行一次之后会被赋值,这里赋默认值或不赋值皆可
+        int page;  // 总页数,也是循环条件,是循环操作运行一次之后会被赋值,这里赋默认值或不赋值皆可
 
         do{
             // dubbo调用查询当前页的spu数据
@@ -39,9 +40,19 @@ public class SearchServiceImpl implements ISearchService {
             List<SpuForElastic> esSpus=new ArrayList<>();
             // 遍历分页查询出的数据库的集合
             for(Spu spu : spus.getList()){
-
+                // 下面开始转换,实例化新实体类,并将同名属性赋值
+                SpuForElastic esSpu=new SpuForElastic();
+                BeanUtils.copyProperties(spu,esSpu);
+                // 将esSpu新增到集合中
+                esSpus.add(esSpu);
             }
-
+            // esSpus集合中已经包含了本页所有数据,利用提供的批量新增完成新增到ES的操作
+            spuRepository.saveAll(esSpus);
+            log.info("成功加载了第{}页数据",i);
+            // 为下次循环做自增
+            i++;
+            // 为page(总页数)赋值
+            page=spus.getTotalPage();
         }while (i<=page);
     }
 
