@@ -29,6 +29,7 @@ import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -172,9 +173,15 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
 
     }
 
+    // 根据订单id,修改订单状态
     @Override
     public void updateOrderState(OrderStateUpdateDTO orderStateUpdateDTO) {
-
+        // 实例化OmsOrder
+        OmsOrder order=new OmsOrder();
+        // orderStateUpdateDTO中包含id和state属性,赋值到order
+        BeanUtils.copyProperties(orderStateUpdateDTO,order);
+        // order中包含了id和state属性,可以执行修改操作
+        omsOrderMapper.updateOrderById(order);
     }
 
     // 分页和查询当前登录用户,指定时间范围内所有订单
