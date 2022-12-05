@@ -1,6 +1,7 @@
 package cn.tedu.mall.search.test;
 
 
+import cn.tedu.mall.pojo.search.entity.SpuForElastic;
 import cn.tedu.mall.search.repository.SpuForElasticRepository;
 import cn.tedu.mall.search.service.ISearchService;
 import org.junit.jupiter.api.Test;
@@ -21,5 +22,19 @@ public class SpuElasticTest {
 
     @Autowired
     private SpuForElasticRepository spuRepository;
+    @Test
+    void showData(){
+        Iterable<SpuForElastic> spus=spuRepository.findAll();
+        spus.forEach(spu -> System.out.println(spu));
+    }
+
+    @Test
+    void showTitle(){
+        Iterable<SpuForElastic> spus=spuRepository
+                .querySpuForElasticsByTitleMatches("手机苹果");
+        spus.forEach(spu -> System.out.println(spu));
+    }
+
+
 
 }

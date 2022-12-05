@@ -10,4 +10,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SpuForElasticRepository extends
                                 ElasticsearchRepository<SpuForElastic,Long> {
+
+    // 查询title字段包含指定关键字(分词)的spu数据
+    Iterable<SpuForElastic> querySpuForElasticsByTitleMatches(String title);
 }
+
+
+
+
+
