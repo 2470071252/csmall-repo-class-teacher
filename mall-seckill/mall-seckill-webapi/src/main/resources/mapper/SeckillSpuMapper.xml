@@ -11,6 +11,25 @@
         <result column="gmt_create" property="gmtCreate" />
         <result column="gmt_modified" property="gmtModified" />
     </resultMap>
+    <!--  秒杀spu表的sql语句字段片段  -->
+    <sql id="SimpleFields" >
+        <if test="true">
+            id,
+            spu_id,
+            list_price,
+            start_time,
+            end_time,
+            gmt_create,
+            gmt_modified
+        </if>
+    </sql>
+    <!--   查询秒杀商品列表的方法  -->
+    <select id="findSeckillSpus" resultMap="BaseResultMap">
+        select
+            <include refid="SimpleFields" />
+        from
+            seckill_spu
+    </select>
 
 
 
