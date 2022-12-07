@@ -1,6 +1,8 @@
 package cn.tedu.mall.seckill.service.impl;
 
+import cn.tedu.mall.common.exception.CoolSharkServiceException;
 import cn.tedu.mall.common.restful.JsonPage;
+import cn.tedu.mall.common.restful.ResponseCode;
 import cn.tedu.mall.pojo.product.vo.SpuStandardVO;
 import cn.tedu.mall.pojo.seckill.model.SeckillSpu;
 import cn.tedu.mall.pojo.seckill.vo.SeckillSpuDetailSimpleVO;
@@ -8,18 +10,22 @@ import cn.tedu.mall.pojo.seckill.vo.SeckillSpuVO;
 import cn.tedu.mall.product.service.seckill.IForSeckillSpuService;
 import cn.tedu.mall.seckill.mapper.SeckillSpuMapper;
 import cn.tedu.mall.seckill.service.ISeckillSpuService;
+import cn.tedu.mall.seckill.utils.SeckillCacheUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -67,9 +73,54 @@ public class SeckillSpuServiceImpl implements ISeckillSpuService {
         return JsonPage.restPage(new PageInfo<>(seckillSpuVOs));
     }
 
+    // 装配Redis操作对象
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    // 根据spuId查询返回SeckillSpuVO对象
     @Override
     public SeckillSpuVO getSeckillSpu(Long spuId) {
-        return null;
+        // 在后面完整版代码中,这里要先经过布隆过滤器的判断
+        // 如果布隆过滤器判断spuId不存在,直接抛出异常终止方法,防止缓存穿透
+
+        // SeckillSpuVO对象是既包含常规spu信息,又包含秒杀spu信息的对象
+        // 获得Redis对应的key
+        String spuVOKey= SeckillCacheUtils.getSeckillSpuVOKey(spuId);
+        // 声明一个当前方法返回值类型的对象
+        SeckillSpuVO seckillSpuVO=null;
+        // 判断Redis中是否包含这个key
+        if(redisTemplate.hasKey(spuVOKey)){
+            // 如果Redis中已经包含这个key 直接获取
+            seckillSpuVO=(SeckillSpuVO) redisTemplate
+                    .boundValueOps(spuVOKey).get();
+        }else{
+            // 如果Redis中不包含这个key,就需要从数据库查询
+            // 查询分秒杀信息和常规信息,先查秒杀信息
+            SeckillSpu seckillSpu = seckillSpuMapper.findSeckillSpuById(spuId);
+            // 判断一下这个seckillSpu是否为null(以为要防止布隆过滤器误判)
+            if(seckillSpu == null){
+                throw new CoolSharkServiceException(ResponseCode.NOT_FOUND,
+                        "您访问的商品不存在!");
+            }
+            // 获取了秒杀信息,再获取常规信息
+            SpuStandardVO spuStandardVO = dubboSeckillSpuService.getSpuById(spuId);
+
+            // 开始将秒杀信息和常规信息都赋值到seckillSpuVO中
+            seckillSpuVO=new SeckillSpuVO();
+            BeanUtils.copyProperties(spuStandardVO,seckillSpuVO);
+            // 手动赋值秒杀信息
+            seckillSpuVO.setSeckillListPrice(seckillSpu.getListPrice());
+            seckillSpuVO.setStartTime(seckillSpu.getStartTime());
+            seckillSpuVO.setEndTime(seckillSpu.getEndTime());
+            // 将seckillSpuVO保存到Redis中,以便后续直接获取
+            redisTemplate.boundValueOps(spuVOKey).set(
+                    seckillSpuVO,
+                    5*60*1000+ RandomUtils.nextInt(10000),
+                    TimeUnit.MILLISECONDS);
+        }
+
+        // 别忘了返回!!!!!
+        return seckillSpuVO;
     }
 
     @Override
