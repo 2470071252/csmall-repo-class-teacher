@@ -66,7 +66,7 @@ public class SeckillInitialJob implements Job {
                 // 要操作Redis,先确定保存值用的key
                 // SeckillCacheUtils.getStockKey是获取库存字符串常量的方法
                 // 方法参数要传入skuId,方法会将这个值追加到常量后
-                // skuStockKey最后的值可能为: “mall:seckill:sku:stock:1”
+                // skuStockKey最后的值可能为: "mall:seckill:sku:stock:1"
                 String skuStockKey= SeckillCacheUtils.getStockKey(sku.getSkuId());
                 // 检查Redis中是否已经包含这个Key
                 if(redisTemplate.hasKey(skuStockKey)){
@@ -77,13 +77,37 @@ public class SeckillInitialJob implements Job {
                     // stringRedisTemplate对象直接保存字符串格式的数据,方便后续修改
                     stringRedisTemplate.boundValueOps(skuStockKey)
                             .set(sku.getSeckillStock()+"",
-                                    // 秒杀时间  +  提取5分钟+防雪崩随机数30秒
-                                    2*60*60*1000+5*60*1000+ RandomUtils.nextInt(30000),
+                                    // 秒杀时间  +  提前5分钟+防雪崩随机数30秒
+                                    //2*60*60*1000+5*60*1000+ RandomUtils.nextInt(30000),
+                                    5*60*1000+RandomUtils.nextInt(10000),
                                     TimeUnit.MILLISECONDS);
                     log.info("{}号sku商品库存数成功预热到缓存!",sku.getSkuId());
                 }
-
             }
+            // 上面是内层循环结束,但是当前位置仍然在外层循环结构中,外层循环遍历spu
+            // 下面是预热spu的随机码
+            // 随机码就是一个随机数,随机范围自己定
+            // 我们只需要将生成的随机码保存到Redis中即可
+            // 确定随机码的key "mall:seckill:spu:url:rand:code:2"
+            String randCodeKey=SeckillCacheUtils.getRandCodeKey(spu.getSpuId());
+            // 判断当前随机码key是否在redis中存在
+            if(redisTemplate.hasKey(randCodeKey)){
+                // 如果已经存在了,不需要任何其他操作
+                // 为了方便今后的测试,也需要将随机码输出到控制台
+                int randCode=(int)redisTemplate.boundValueOps(randCodeKey).get();
+                log.info("{}号spu商品的随机码已经缓存过了,值为:{}",spu.getSpuId(),randCode);
+            }else{
+                // 如果不存在,就要生成随机码
+                // 生成随机码的范围自定即可,这里设计100000-999999
+                int randCode=RandomUtils.nextInt(900000)+100000;
+                redisTemplate.boundValueOps(randCodeKey)
+                        .set(randCode,
+                                5*60*1000+RandomUtils.nextInt(10000),
+                                TimeUnit.MILLISECONDS);
+                log.info("spuId为{}号的随机码生成成功!值为:{}",
+                        spu.getSpuId(),randCode);
+            }
+
         }
     }
 }
