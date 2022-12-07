@@ -31,6 +31,28 @@
             seckill_spu
     </select>
 
+    <!-- 根据指定时间,查询出正在进行秒杀的商品列表 -->
+    <select id="findSeckillSpusByTime" resultMap="BaseResultMap">
+        select
+            <include refid="SimpleFields" />
+        from
+            seckill_spu
+        where
+            start_time &lt; #{time}
+        and
+            end_time &gt; #{time}
+    </select>
+
+    <!--  根据spuId查询秒杀spu信息  -->
+    <select id="findSeckillSpuById" resultMap="BaseResultMap">
+        select
+            <include refid="SimpleFields" />
+        from
+            seckill_spu
+        where
+            spu_id=#{spuId}
+    </select>
+
 
 
 </mapper>
