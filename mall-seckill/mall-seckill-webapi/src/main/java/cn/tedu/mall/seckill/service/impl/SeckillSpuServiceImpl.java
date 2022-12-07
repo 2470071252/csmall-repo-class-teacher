@@ -23,6 +23,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -118,7 +119,29 @@ public class SeckillSpuServiceImpl implements ISeckillSpuService {
                     5*60*1000+ RandomUtils.nextInt(10000),
                     TimeUnit.MILLISECONDS);
         }
-
+        // 到此为止seckillSpuVO只有url属性未被赋值了
+        // url属性是要发送给前端的,前端可以使用它来发起生成秒杀订单的请求
+        // 所以我们必须先判断当前时间是否在允许秒杀购买该商品的时间段内
+        // 获取当前时间
+        LocalDateTime nowTime=LocalDateTime.now();
+        // 对比时,为了降低系统资源消耗,尽量不连数据库,从seckillSpuVO中获取开始和结束时间
+        // 判断逻辑是秒杀开始时间小于当前时间,并且当前时间小于秒杀结束时间
+        if(seckillSpuVO.getStartTime().isBefore(nowTime) &&
+                        nowTime.isBefore(seckillSpuVO.getEndTime())){
+            // 进入if表示当前时间是在当前商品秒杀时间段内的,可以为url赋值
+            // 我们要从Redis中获取已经预热的随机码
+            String randCodeKey=SeckillCacheUtils.getRandCodeKey(spuId);
+            // 判断Redis中是否存在这个key
+            if(!redisTemplate.hasKey(randCodeKey)){
+                // 如果不存在直接抛异常
+                throw new CoolSharkServiceException(ResponseCode.NOT_FOUND,"当前随机码不存在");
+            }
+            // key存在获取随机码
+            String randCode=redisTemplate.boundValueOps(randCodeKey).get()+"";
+            // 将随机码赋值到url
+            seckillSpuVO.setUrl("/seckill/"+randCode);
+            log.info("被赋值的url为:{}",seckillSpuVO.getUrl());
+        }
         // 别忘了返回!!!!!
         return seckillSpuVO;
     }
