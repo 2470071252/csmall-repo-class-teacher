@@ -53,6 +53,12 @@
             spu_id=#{spuId}
     </select>
 
+    <!-- 布隆过滤器用:查询获得所有秒杀spu商品的spuId数组 -->
+    <!--                                    ↓↓↓↓   -->
+    <select id="findAllSeckillSpuIds" resultType="long">
+        select spu_id from seckill_spu
+    </select>
+
 
 
 </mapper>
