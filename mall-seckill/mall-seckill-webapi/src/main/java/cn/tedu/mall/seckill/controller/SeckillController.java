@@ -1,10 +1,14 @@
 package cn.tedu.mall.seckill.controller;
 
+import cn.tedu.mall.common.exception.CoolSharkServiceException;
 import cn.tedu.mall.common.restful.JsonResult;
+import cn.tedu.mall.common.restful.ResponseCode;
+import cn.tedu.mall.pojo.seckill.dto.SeckillOrderAddDTO;
 import cn.tedu.mall.pojo.seckill.vo.SeckillCommitVO;
 import cn.tedu.mall.seckill.exception.SeckillBlockHandler;
 import cn.tedu.mall.seckill.exception.SeckillFallBack;
 import cn.tedu.mall.seckill.service.ISeckillService;
+import cn.tedu.mall.seckill.utils.SeckillCacheUtils;
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -12,6 +16,8 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,8 +39,32 @@ public class SeckillController {
     @SentinelResource(value = "seckill",
         blockHandlerClass = SeckillBlockHandler.class,blockHandler = "seckillBlock",
         fallbackClass = SeckillFallBack.class,fallback = "seckillFallBack")
-    public JsonResult<SeckillCommitVO> commitSeckill(){
-        return null;
+    public JsonResult<SeckillCommitVO> commitSeckill(
+            @PathVariable String randCode,
+            @Validated SeckillOrderAddDTO seckillOrderAddDTO){
+        // 先获取spuId
+        Long spuId=seckillOrderAddDTO.getSpuId();
+        // 或者这个spuId对应的随机码的key
+        String randCodeKey= SeckillCacheUtils.getRandCodeKey(spuId);
+        // 判断Redis中是否有这个Key
+        if(redisTemplate.hasKey(randCodeKey)){
+            // 如果redis中有这个key,将它的value取出(获取随机码)
+            String redisRandCode=redisTemplate.boundValueOps(randCodeKey).get()+"";
+            // 判断前端发来的随机码和redis中保存的是否一致
+            if(! redisRandCode.equals(randCode) ){
+                // 前端随机码和redis随机码不一致,抛出异常
+                throw new CoolSharkServiceException(ResponseCode.NOT_FOUND,
+                        "没有找到指定商品(随机码不正确)");
+            }
+            // 程序运行到此处,表示随机码匹配,调用业务逻辑层
+            SeckillCommitVO commitVO=
+                    seckillService.commitSeckill(seckillOrderAddDTO);
+            return JsonResult.ok(commitVO);
+        }else{
+            // 如果redis中没有这个key直接抛出异常
+            throw new CoolSharkServiceException(ResponseCode.NOT_FOUND,
+                    "没有找到指定商品");
+        }
     }
 
 
