@@ -17,9 +17,10 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
+//@Service
 @Slf4j
-public class SearchServiceImpl implements ISearchService {
+@Deprecated
+public class SearchServiceImpl  {
 
     // dubbo调用product模块分页查询所有spu的方法
     @DubboReference
@@ -27,7 +28,7 @@ public class SearchServiceImpl implements ISearchService {
     @Autowired
     private SpuForElasticRepository spuRepository;
 
-    @Override
+
     public void loadSpuByPage() {
         // 这个方法需要循环调用分页查询所有spu数据的方法,直到将所有数据都查出
         // 每次循环的操作就是将当前从数据库中查询的数据新增到ES
@@ -59,7 +60,7 @@ public class SearchServiceImpl implements ISearchService {
     }
 
     // 根据用户指定的关键字分页查询ES中商品信息
-    @Override
+
     public JsonPage<SpuForElastic> search(
                         String keyword, Integer page, Integer pageSize) {
         // 根据参数中的分页数据,执行分页查询,注意SpringData分页页码从0开始
