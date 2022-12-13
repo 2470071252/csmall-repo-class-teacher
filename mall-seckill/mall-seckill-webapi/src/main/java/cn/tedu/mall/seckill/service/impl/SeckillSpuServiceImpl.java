@@ -11,6 +11,7 @@ import cn.tedu.mall.pojo.seckill.vo.SeckillSpuVO;
 import cn.tedu.mall.product.service.seckill.IForSeckillSpuService;
 import cn.tedu.mall.seckill.mapper.SeckillSpuMapper;
 import cn.tedu.mall.seckill.service.ISeckillSpuService;
+import cn.tedu.mall.seckill.utils.RedisBloomUtils;
 import cn.tedu.mall.seckill.utils.SeckillCacheUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -24,6 +25,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,11 +81,26 @@ public class SeckillSpuServiceImpl implements ISeckillSpuService {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    // 装配操作布隆过滤器的对象
+    @Autowired
+    private RedisBloomUtils redisBloomUtils;
+
     // 根据spuId查询返回SeckillSpuVO对象
     @Override
     public SeckillSpuVO getSeckillSpu(Long spuId) {
         // 在后面完整版代码中,这里要先经过布隆过滤器的判断
         // 如果布隆过滤器判断spuId不存在,直接抛出异常终止方法,防止缓存穿透
+        // 获得布隆过滤器的key
+        String bloomTodayKey=SeckillCacheUtils
+                        .getBloomFilterKey(LocalDate.now());
+        log.info("当前批次商品布隆过滤器的key为:{}",bloomTodayKey);
+        // 判断方法参数spuId是否在布隆过滤器中
+        if(!redisBloomUtils.bfexists(bloomTodayKey,spuId+"")){
+            // 进入这个if表示当前spuId不在布隆过滤器中
+            // 防止缓存穿透,抛出异常,终止程序
+            throw new CoolSharkServiceException(ResponseCode.NOT_FOUND,
+                    "您访问的商品不存在!(布隆过滤器生效)");
+        }
 
         // SeckillSpuVO对象是既包含常规spu信息,又包含秒杀spu信息的对象
         // 获得Redis对应的key
