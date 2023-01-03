@@ -7,10 +7,12 @@ import cn.tedu.mall.pojo.product.vo.CategoryStandardVO;
 import cn.tedu.mall.product.service.front.IForFrontCategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,13 +59,34 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
         return null;
     }
 
-    private FrontCategoryTreeVO<FrontCategoryEntity> initTree(List<CategoryStandardVO> categoryStandardVOs) {
+    private FrontCategoryTreeVO<FrontCategoryEntity>
+                    initTree(List<CategoryStandardVO> categoryStandardVOs) {
         // 第一步:
         // 确定所有分类id包含的子分类对象
         // 我们可以以分类id作为Key,这个分类对象包含的所有子分类作为Value,保存到Map中
         // 因为一个分类对象可以包含多个子分类,所以这个Map的value是List类型
         Map<Long,List<FrontCategoryEntity>> map=new HashMap<>();
         log.info("准备构建三级分类树,节点数量为:{}",categoryStandardVOs.size());
+        // 遍历当前方法参数,也就是数据库查询出的所有分类对象集合
+        for(CategoryStandardVO categoryStandardVO : categoryStandardVOs){
+            // 需要将categoryStandardVO对象中同名属性赋值给FrontCategoryEntity对象
+            // 因为需要FrontCategoryEntity类型对象中的childrens属性才能实现父子的关联
+            FrontCategoryEntity frontCategoryEntity=new FrontCategoryEntity();
+            BeanUtils.copyProperties(categoryStandardVO,frontCategoryEntity);
+            // 获取当前对象的父分类id值,以备后续使用
+            Long parentId=frontCategoryEntity.getParentId();
+            // 判断这个父分类id值,是否已经在map中有对应的Key
+            if(!map.containsKey(parentId)){
+                // 如果当前map中不包含当前分类对象的父分类id
+                // 那么就要新建这个元素,就要确定key和value
+                // key就是parentId的值,value是个List对象,list中保存当前分类对象(有childrens的)
+                List<FrontCategoryEntity> value=new ArrayList<>();
+                value.add(frontCategoryEntity);
+                // 在map中添加元素
+                map.put(parentId,value);
+            }
+
+        }
 
         return null;
 
