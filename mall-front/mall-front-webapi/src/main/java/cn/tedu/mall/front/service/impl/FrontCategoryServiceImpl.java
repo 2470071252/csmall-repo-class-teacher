@@ -65,9 +65,6 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
         Map<Long,List<FrontCategoryEntity>> map=new HashMap<>();
         log.info("准备构建三级分类树,节点数量为:{}",categoryStandardVOs.size());
 
-
-
-
         return null;
 
 
