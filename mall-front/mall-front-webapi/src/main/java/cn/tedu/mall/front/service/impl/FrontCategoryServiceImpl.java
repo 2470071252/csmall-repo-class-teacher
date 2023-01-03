@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -57,8 +58,14 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
         // 整个转换的过程比较复杂,所以我们单独编写一个方法
         FrontCategoryTreeVO<FrontCategoryEntity> treeVO=
                                         initTree(categoryStandardVOs);
-
-        return null;
+        // 上面方法完成了三级分类树的构建,返回包含树结构的treeVO对象
+        // 下面要将这个对象保存在Redis中,在后面的请求中直接从Redis中获取treeVO提高效率
+        redisTemplate.boundValueOps(CATEGORY_TREE_KEY)
+                .set(treeVO,1, TimeUnit.MINUTES);
+        // 上面的方法定义了保存到Redis数据的内容和有效期
+        // 我们代码中建议定义较小的有效期,例如1分钟,在上线的项目中保存时间会长,例如24小时甚至更长
+        // 别忘了最后也返回treeVO
+        return treeVO;
     }
 
     private FrontCategoryTreeVO<FrontCategoryEntity>
