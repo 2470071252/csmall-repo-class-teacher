@@ -125,12 +125,19 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
                     log.warn("当前二级分类没有三级分类内容:{}",thirdLevelParentId);
                     continue;
                 }
+                // 将三级分类对象集合添加到二级分类对象的childrens属性中
+                twoLevel.setChildrens(thirdLevels);
             }
-
+            // 将二级分类对象集合添加到一级分类对象的childrens属性中
+            oneLevel.setChildrens(secondLevels);
         }
-
-
-
-        return null;
+        // 到此为止,所有的分类对象都应该确认了自己和父\子分类对象的关联关系
+        // 最后我们要将firstLevels集合赋给FrontCategoryTreeVO类型对象
+        // 实例化这个类型对象,给它的list属性赋值并返回即可
+        FrontCategoryTreeVO<FrontCategoryEntity> treeVO=
+                new FrontCategoryTreeVO<>();
+        treeVO.setCategories(firstLevels);
+        // 千万别忘了返回!!!!
+        return treeVO;
     }
 }
