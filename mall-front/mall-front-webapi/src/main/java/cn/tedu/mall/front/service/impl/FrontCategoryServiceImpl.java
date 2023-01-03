@@ -107,6 +107,26 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
             Long secondLevelParentId=oneLevel.getId();// getId()!!!!!!!!!!
             // 根据上面二级分类的父Id,获得这个一级分类包含的所有二级分类对象集合
             List<FrontCategoryEntity> secondLevels = map.get(secondLevelParentId);
+            // 判断二级分类对象中是否有元素
+            if(secondLevels==null || secondLevels.isEmpty()){
+                // 二级分类缺失不抛异常,日志输出警告即可
+                log.warn("当前分类没有二级分类内容:{}",secondLevelParentId);
+                // 如果二级分类对象缺失,可以直接跳过本次循环剩余的内容,直接开始下次循环
+                continue;
+            }
+            // 确定二级分类对象非空后,开始遍历二级分类对象集合
+            for(FrontCategoryEntity twoLevel : secondLevels){
+                // 获取二级分类的id,作为三级分类的父id
+                Long thirdLevelParentId=twoLevel.getId();// getId()!!!!!!!!!!
+                // 根据这个二级分类的父id,获取它对应的所有三级分类的集合
+                List<FrontCategoryEntity> thirdLevels=map.get(thirdLevelParentId);
+                // 判断thirdLevels是否为null
+                if(thirdLevels==null || thirdLevels.isEmpty()){
+                    log.warn("当前二级分类没有三级分类内容:{}",thirdLevelParentId);
+                    continue;
+                }
+            }
+
         }
 
 
