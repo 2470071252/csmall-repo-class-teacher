@@ -1,5 +1,7 @@
 package cn.tedu.mall.front.service.impl;
 
+import cn.tedu.mall.common.exception.CoolSharkServiceException;
+import cn.tedu.mall.common.restful.ResponseCode;
 import cn.tedu.mall.front.service.IFrontCategoryService;
 import cn.tedu.mall.pojo.front.entity.FrontCategoryEntity;
 import cn.tedu.mall.pojo.front.vo.FrontCategoryTreeVO;
@@ -84,13 +86,31 @@ public class FrontCategoryServiceImpl implements IFrontCategoryService {
                 value.add(frontCategoryEntity);
                 // 在map中添加元素
                 map.put(parentId,value);
+            }else{
+                // 如果map中已经包含当前遍历对象父分类id的Key
+                // 那么久就将当前分类对象追加到这个元素的value集合中
+                map.get(parentId).add(frontCategoryEntity);
             }
-
+        }
+        // 第二步:
+        // 将子分类对象添加到对应的分类对象的children属性中
+        // 先从获取一级分类对象开始,我们项目设定父分类id为0的是一级分类(Long类型要写0L)
+        List<FrontCategoryEntity> firstLevels = map.get(0L);
+        // 判断所有一级分类集合如果为null(没有一级分类),直接抛出异常终止程序
+        if(firstLevels==null || firstLevels.isEmpty()){
+            throw new CoolSharkServiceException(
+                    ResponseCode.INTERNAL_SERVER_ERROR,"没有一级分类对象!");
+        }
+        // 遍历一级分类集合
+        for(FrontCategoryEntity oneLevel : firstLevels){
+            // 一级分类对象的Id就是二级分类对象的父id
+            Long secondLevelParentId=oneLevel.getId();// getId()!!!!!!!!!!
+            // 根据上面二级分类的父Id,获得这个一级分类包含的所有二级分类对象集合
+            List<FrontCategoryEntity> secondLevels = map.get(secondLevelParentId);
         }
 
+
+
         return null;
-
-
-
     }
 }
