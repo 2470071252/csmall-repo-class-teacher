@@ -3,6 +3,8 @@ package cn.tedu.mall.front.service.impl;
 import cn.tedu.mall.common.restful.JsonPage;
 import cn.tedu.mall.front.service.IFrontProductService;
 import cn.tedu.mall.pojo.product.vo.*;
+import cn.tedu.mall.product.service.front.IForFrontAttributeService;
+import cn.tedu.mall.product.service.front.IForFrontSkuService;
 import cn.tedu.mall.product.service.front.IForFrontSpuService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -16,6 +18,14 @@ public class FrontProductServiceImpl implements IFrontProductService {
 
     @DubboReference
     private IForFrontSpuService dubboSpuService;
+    // 根据spuId查询sku集合的方法包含在下面的业务接口中
+    @DubboReference
+    private IForFrontSkuService dubboSkuService;
+    // 根据spuId查询商品属性集合的业务逻辑层接口
+    @DubboReference
+    private IForFrontAttributeService dubboAttributeService;
+
+
 
     @Override
     public JsonPage<SpuListItemVO> listSpuByCategoryId(Long categoryId, Integer page, Integer pageSize) {
