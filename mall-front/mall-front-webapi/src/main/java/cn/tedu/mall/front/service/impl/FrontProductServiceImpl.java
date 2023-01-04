@@ -25,8 +25,6 @@ public class FrontProductServiceImpl implements IFrontProductService {
     @DubboReference
     private IForFrontAttributeService dubboAttributeService;
 
-
-
     @Override
     public JsonPage<SpuListItemVO> listSpuByCategoryId(Long categoryId, Integer page, Integer pageSize) {
         // dubbo调用的方法是product模块编写的业务逻辑层方法
@@ -37,23 +35,32 @@ public class FrontProductServiceImpl implements IFrontProductService {
         return jsonPage;
     }
 
+    // 根据spuId查询spu信息
     @Override
     public SpuStandardVO getFrontSpuById(Long id) {
-        return null;
+        SpuStandardVO spuStandardVO=dubboSpuService.getSpuById(id);
+        return spuStandardVO;
     }
 
+    // 根据spuId查询sku列表
     @Override
     public List<SkuStandardVO> getFrontSkusBySpuId(Long spuId) {
-        return null;
+        List<SkuStandardVO> list=dubboSkuService.getSkusBySpuId(spuId);
+        return list;
     }
 
+    // 根据spuId查询spuDetail详情
     @Override
     public SpuDetailStandardVO getSpuDetail(Long spuId) {
-        return null;
+        SpuDetailStandardVO spuDetailStandardVO=
+                dubboSpuService.getSpuDetailById(spuId);
+        return spuDetailStandardVO;
     }
-
+    // 根据spuId查询当前商品的属性\规格列表
     @Override
     public List<AttributeStandardVO> getSpuAttributesBySpuId(Long spuId) {
-        return null;
+        List<AttributeStandardVO> list=
+                dubboAttributeService.getSpuAttributesBySpuId(spuId);
+        return list;
     }
 }
