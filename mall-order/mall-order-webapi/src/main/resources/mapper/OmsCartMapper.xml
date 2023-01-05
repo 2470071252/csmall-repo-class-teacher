@@ -91,7 +91,23 @@
             user_id=#{id}
     </select>
 
-
+    <!-- 根据用户选中的一个或多个id,删除购物车中的商品(支持批量删除)  -->
+    <!--
+        foreach标签中collection属性赋值为数组时,使用array提取数组
+        item是定义遍历数组元素的名称,必须和循环体重#{}中的内容一致
+        separator是分隔符,负责进行元素间值的填充
+        open和close是循环开始前和循环结束后再sql中添加的内容
+    -->
+    <delete id="deleteCartsByIds">
+        delete from
+            oms_cart
+        where
+            id in
+        <foreach collection="array" item="id" separator=","
+                            open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
 
 </mapper>
 
