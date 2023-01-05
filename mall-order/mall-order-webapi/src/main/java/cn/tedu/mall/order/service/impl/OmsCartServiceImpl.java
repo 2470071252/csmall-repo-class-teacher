@@ -45,9 +45,14 @@ public class OmsCartServiceImpl implements IOmsCartService {
             omsCartMapper.saveCart(newCart);
         }else{
             // 如果已经存在执行数量的修改
+            // 运行到这里omsCart一定不是null
+            // 我们需要做的就是将购物车中原有的数量和本次新增的商品数量相加
+            // 再赋值到当前的omsCart属性中去执行修改
+            // 我们需要将omsCart对象的getQuantity()和cartDTO对象的getQuantity()相加
+            omsCart.setQuantity(omsCart.getQuantity()+cartDTO.getQuantity());
+            // 确定了数量之后,执行持久层方法进行修改
+            omsCartMapper.updateQuantityById(omsCart);
         }
-
-
     }
 
     @Override
