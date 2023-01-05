@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface OrderMapper {
+public interface OmsCartMapper {
 
     // 判断当前用户的购物车中是否存在商品
     OmsCart selectExistsCart(@Param("userId")String userId,
