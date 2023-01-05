@@ -1,8 +1,11 @@
 package cn.tedu.mall.order.mapper;
 
 import cn.tedu.mall.pojo.order.model.OmsCart;
+import cn.tedu.mall.pojo.order.vo.CartStandardVO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface OmsCartMapper {
@@ -16,5 +19,9 @@ public interface OmsCartMapper {
 
     // 修改购物车中sku的商品数量
     int updateQuantityById(OmsCart omsCart);
+
+    // 根据用户id查询该用户购物车中的sku信息
+    List<CartStandardVO> selectCartsByUserId(Long userId);
+
 
 }
