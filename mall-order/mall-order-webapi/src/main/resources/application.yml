@@ -15,7 +15,9 @@ spring:
   # 激活的profile配置
   profiles:
     active: test
-
+logging:
+  level:
+    cn.tedu.mall.order: debug
 mybatis:
   mapper-locations:
     - classpath:mapper/*.xml
