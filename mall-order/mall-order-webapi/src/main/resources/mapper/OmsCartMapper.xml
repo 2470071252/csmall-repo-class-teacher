@@ -31,7 +31,7 @@
         </if>
     </sql>
     <!--   判断当前用户的购物车中是否存在指定商品  -->
-    <select id="selectExistsCart">
+    <select id="selectExistsCart" resultMap="BaseResultMap">
         select
             <include refid="SimpleQueryFields" />
         from

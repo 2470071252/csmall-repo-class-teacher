@@ -8,8 +8,8 @@ import org.springframework.stereotype.Repository;
 public interface OmsCartMapper {
 
     // 判断当前用户的购物车中是否存在商品
-    OmsCart selectExistsCart(@Param("userId")String userId,
-                             @Param("skuId")String skuId);
+    OmsCart selectExistsCart(@Param("userId")Long userId,
+                             @Param("skuId")Long skuId);
 
     // 新增sku信息到购物车
     int saveCart(OmsCart omsCart);
