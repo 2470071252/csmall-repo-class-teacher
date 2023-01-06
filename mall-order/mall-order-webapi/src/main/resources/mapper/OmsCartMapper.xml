@@ -117,6 +117,16 @@
             user_id=#{userId}
     </delete>
 
+    <!--  根据用户id和skuId删除购物车中商品  -->
+    <delete id="deleteCartByUserIdAndSkuId">
+        delete from
+            oms_cart
+        where
+            user_id=#{userId}
+        and
+            sku_id=#{skuId}
+    </delete>
+
 
 
 

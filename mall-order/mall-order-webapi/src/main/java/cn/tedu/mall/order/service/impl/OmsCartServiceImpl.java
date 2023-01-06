@@ -95,7 +95,10 @@ public class OmsCartServiceImpl implements IOmsCartService {
 
     @Override
     public void removeUserCarts(OmsCart omsCart) {
-
+        // 直接调用删除购物车中商品方法即可
+        // 我们电商网站不会因为购物车中商品不存在,就不让用户购买
+        // 所以这个删除不判断是否成功,也不抛出异常
+        omsCartMapper.deleteCartByUserIdAndSkuId(omsCart);
     }
 
     @Override
