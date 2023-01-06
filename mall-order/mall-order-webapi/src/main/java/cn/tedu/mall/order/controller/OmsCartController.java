@@ -76,6 +76,20 @@ public class OmsCartController {
         return JsonResult.ok("修改完成!");
     }
 
+    @PostMapping("/delete/all")
+    @ApiOperation("清空当前登录用户购物车信息")
+    // SpringSecurity框架用一个数组保存权限和角色,规范上所有角色都用ROLE_开头来标识
+    // @PreAuthorize("hasAuthority('xxx')")是来判断这个数组中是否具备某个权限或角色的
+    // @PreAuthorize("hasRole('yyy')")是专门用来判断数组中是否具备某个角色的
+    // 实际上判断的是在数组中是否有ROLE_yyy的资格
+    // 所以下面两个注解在运行判断时是等价的
+    // @PreAuthorize("hasAuthority('ROLE_user')")
+    @PreAuthorize("hasRole('user')")
+    public JsonResult removeCartsByUserId(){
+        omsCartService.removeAllCarts();
+        return JsonResult.ok("购物车已清空");
+    }
+
 
 }
 
