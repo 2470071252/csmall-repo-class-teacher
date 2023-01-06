@@ -27,6 +27,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 // 订单管理模块的业务逻辑层实现类,因为后期秒杀模块也是要生成订单的,需要dubbo调用这个方法
@@ -80,6 +82,31 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
             // 如果userId为null 就需要从SpringSecurity上下文获取用户id
             order.setUserId(getUserId());
         }
+
+        // 可以将OrderAddDTO类中未被设置为非空的属性,进行null的验证
+        // 这里以state属性为例,如果state为null 默认值设置为0
+        if(order.getState()==null){
+            order.setState(0);
+        }
+
+        // 为下单时间赋值,赋值当前时间即可
+        // 为了保证gmt_order和gmt_create时间一致
+        // 这里为它们赋值相同的时间
+        LocalDateTime now=LocalDateTime.now();
+        order.setGmtOrder(now);
+        order.setGmtCreate(now);
+        order.setGmtModified(now);
+
+        // 最后处理实际支付金额的计算,返回给前端,用于和前端计算的金额进行验证
+        // 实际支付金额=原价-优惠+运费
+        // 所有和金额价格等钱相关的数据,为了防止浮点偏移,都要使用BigDecimal类型
+        BigDecimal price=order.getAmountOfOriginalPrice();
+        BigDecimal freight=order.getAmountOfFreight();
+        BigDecimal discount=order.getAmountOfDiscount();
+        BigDecimal actualPay=price.add(freight).subtract(discount);
+        // 计算得到的实际支付金额,赋值给order对象
+        order.setAmountOfActualPay(actualPay);
+
     }
 
 
