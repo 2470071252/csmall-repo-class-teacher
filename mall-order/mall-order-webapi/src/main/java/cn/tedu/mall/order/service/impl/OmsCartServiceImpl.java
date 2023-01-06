@@ -95,6 +95,13 @@ public class OmsCartServiceImpl implements IOmsCartService {
 
     @Override
     public void updateQuantity(CartUpdateDTO cartUpdateDTO) {
+        // 当前方法参数是CartUpdateDTO,执行修改需要的是OmsCart
+        // 所以要先实例化OmsCart对象,并给它赋值
+        OmsCart omsCart=new OmsCart();
+        // cartUpdateDTO只有id和quantity属性,赋值给omsCart,执行修改的参数齐全了
+        BeanUtils.copyProperties(cartUpdateDTO,omsCart);
+        // 执行修改
+        omsCartMapper.updateQuantityById(omsCart);
 
     }
 
