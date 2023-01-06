@@ -120,8 +120,15 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
         // 4.新增订单项(批量新增集合中的所有订单项数据)
         omsOrderItemMapper.insertOrderItemList(omsOrderItems);
         // 第三部分:准备返回值,返回给前端
-
-        return null;
+        // 实例化返回值类型对象
+        OrderAddVO addVO=new OrderAddVO();
+        // 给各个属性赋值
+        addVO.setId(order.getId());
+        addVO.setSn(order.getSn());
+        addVO.setCreateTime(order.getGmtCreate());
+        addVO.setPayAmount(order.getAmountOfActualPay());
+        // 别忘了返回addVO
+        return addVO;
     }
 
     // 为order对象补齐属性的方法
