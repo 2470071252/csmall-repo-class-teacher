@@ -14,7 +14,7 @@ public interface SpuForElasticRepository extends
     // 查询title字段中包含指定关键字的spu数据
     Iterable<SpuForElastic> querySpuForElasticsByTitleMatches(String title);
 
-    @Query("\n" +
+    @Query("{\n" +
             "    \"bool\": {\n" +
             "      \"should\": [\n" +
             "        { \"match\": { \"name\":  \"?0\" }},\n" +
@@ -22,7 +22,8 @@ public interface SpuForElasticRepository extends
             "        { \"match\": { \"description\": \"?0\"}},\n" +
             "        { \"match\": { \"category_name\": \"?0\"}}\n" +
             "      ]\n" +
-            "    }")
+            "    }" +
+            "}")
     // 上面使用了指定搜索语句的方式来进行查询,下面的方法名就可以随意定义了
     Iterable<SpuForElastic> querySearch(String keyword);
 }
