@@ -5,6 +5,7 @@ import cn.tedu.mall.common.restful.JsonResult;
 import cn.tedu.mall.order.service.IOmsOrderService;
 import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
 import cn.tedu.mall.pojo.order.dto.OrderListTimeDTO;
+import cn.tedu.mall.pojo.order.dto.OrderStateUpdateDTO;
 import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 import cn.tedu.mall.pojo.order.vo.OrderListVO;
 import io.swagger.annotations.Api;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rx.internal.operators.OnSubscribeTakeLastOne;
 
 @RestController
 @RequestMapping("/oms/order")
@@ -41,6 +43,16 @@ public class OmsOrderController {
         JsonPage<OrderListVO> jsonPage=
                 omsOrderService.listOrdersBetweenTimes(orderListTimeDTO);
         return JsonResult.ok(jsonPage);
+
+    }
+
+    @PostMapping("/update/state")
+    @ApiOperation("修改订单状态的方法")
+    @PreAuthorize("hasRole('user')")
+    public JsonResult updateOrderState(
+            @Validated OrderStateUpdateDTO orderStateUpdateDTO){
+        omsOrderService.updateOrderState(orderStateUpdateDTO);
+        return JsonResult.ok("修改完成!");
 
     }
 
