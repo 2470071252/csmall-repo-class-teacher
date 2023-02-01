@@ -20,6 +20,8 @@ import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 import cn.tedu.mall.pojo.order.vo.OrderDetailVO;
 import cn.tedu.mall.pojo.order.vo.OrderListVO;
 import cn.tedu.mall.product.service.order.IForOrderSkuService;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -189,8 +191,14 @@ public class OmsOrderServiceImpl implements IOmsOrderService {
         // 方法开始第一步,先确定要查询的时间范围
         // 编写一个方法,判断orderListTimeDTO参数中时间的各种情况
         validateTimeAndLoadTime(orderListTimeDTO);
-
-        return null;
+        // 获取userId赋值到参数中
+        orderListTimeDTO.setUserId(getUserId());
+        // 设置分页条件
+        PageHelper.startPage(orderListTimeDTO.getPage(),
+                             orderListTimeDTO.getPageSize());
+        List<OrderListVO> list = omsOrderMapper.selectOrdersBetweenTimes(orderListTimeDTO);
+        // 别忘了返回
+        return JsonPage.restPage(new PageInfo<>(list));
     }
 
     private void validateTimeAndLoadTime(OrderListTimeDTO orderListTimeDTO) {
