@@ -1,6 +1,8 @@
 package cn.tedu.mall.search.repository;
 
 import cn.tedu.mall.pojo.search.entity.SpuForElastic;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
@@ -25,5 +27,5 @@ public interface SpuForElasticRepository extends
             "    }" +
             "}")
     // 上面使用了指定搜索语句的方式来进行查询,下面的方法名就可以随意定义了
-    Iterable<SpuForElastic> querySearch(String keyword);
+    Page<SpuForElastic> querySearch(String keyword, Pageable pageable);
 }

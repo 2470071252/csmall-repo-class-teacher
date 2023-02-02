@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -58,9 +60,22 @@ public class SearchServiceImpl implements ISearchService {
         }while(i<=page);
     }
 
+    // 根据用户输入的关键字进行分页搜索的方法
     @Override
     public JsonPage<SpuForElastic> search(String keyword, Integer page, Integer pageSize) {
-        return null;
+        // 根据参数中的分页数据进行分页查询,注意SpringData=页码从0开始
+        Page<SpuForElastic> spus=spuRepository.querySearch(
+                                keyword, PageRequest.of(page-1,pageSize));
+        // 分页查询调用结束,返回Page对象,我们要转换为JsonPage对象返回
+        JsonPage<SpuForElastic> jsonPage=new JsonPage<>();
+        // 赋值相关数据
+        jsonPage.setPage(page);
+        jsonPage.setPageSize(pageSize);
+        jsonPage.setTotalPage(spus.getTotalPages());
+        jsonPage.setTotal(spus.getTotalElements());
+        jsonPage.setList(spus.getContent());
+        // 最后返回!!!
+        return jsonPage;
     }
 
 
