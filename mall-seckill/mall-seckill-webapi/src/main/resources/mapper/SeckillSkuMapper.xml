@@ -14,6 +14,27 @@
         <result column="seckill_limit" property="seckillLimit" />
     </resultMap>
 
+    <sql id="SimpleFields">
+        <if test="true">
+            id,
+            sku_id,
+            spu_id,
+            seckill_stock,
+            seckill_price,
+            gmt_create,
+            gmt_modified,
+            seckill_limit
+        </if>
+    </sql>
+    <!-- 根据spuId查询秒杀sku列表 -->
+    <select id="findSeckillSkusBySpuId" resultMap="BaseResultMap">
+        select
+            <include refid="SimpleFields" />
+        from
+            seckill_sku
+        where
+            spu_id=#{spuId}
+    </select>
 
 
 </mapper>
