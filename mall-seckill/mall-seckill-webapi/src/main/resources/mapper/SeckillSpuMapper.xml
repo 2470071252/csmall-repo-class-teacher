@@ -44,5 +44,23 @@
             end_time &gt; #{time}
     </select>
 
+    <!--  根据spuId查询秒杀spu信息 -->
+    <select id="findSeckillSpuById" resultMap="BaseResultMap">
+        select
+            <include refid="SimpleFields" />
+        from
+            seckill_spu
+        where
+            spu_id=#{spuId}
+    </select>
+
+    <!-- 查询秒杀表中所有商品的spuId,由于后面保存到布隆过滤器防止缓存穿透  -->
+    <!--                              ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓  -->
+    <select id="findAllSeckillSpuIds" resultType="long">
+        select spu_id from seckill_spu
+    </select>
+
+
+
 
 </mapper>
