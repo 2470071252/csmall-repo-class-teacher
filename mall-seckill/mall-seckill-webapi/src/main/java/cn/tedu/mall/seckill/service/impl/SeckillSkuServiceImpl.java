@@ -1,5 +1,6 @@
 package cn.tedu.mall.seckill.service.impl;
 
+import cn.tedu.mall.pojo.product.vo.SkuStandardVO;
 import cn.tedu.mall.pojo.seckill.model.SeckillSku;
 import cn.tedu.mall.pojo.seckill.vo.SeckillSkuVO;
 import cn.tedu.mall.product.service.seckill.IForSeckillSkuService;
@@ -7,13 +8,16 @@ import cn.tedu.mall.seckill.mapper.SeckillSkuMapper;
 import cn.tedu.mall.seckill.service.ISeckillSkuService;
 import cn.tedu.mall.seckill.utils.SeckillCacheUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -46,8 +50,28 @@ public class SeckillSkuServiceImpl implements ISeckillSkuService {
             if(redisTemplate.hasKey(skuVOKey)){
                 seckillSkuVO=(SeckillSkuVO)redisTemplate
                                  .boundValueOps(skuVOKey).get() ;
+            }else{
+                // 如果redis中存在这个key,就要查询数据库
+                // dubbo调用查询sku常规信息
+                SkuStandardVO skuStandardVO=dubboSkuService.getById(skuId);
+                // 实例化SeckillSkuVO对象
+                seckillSkuVO=new SeckillSkuVO();
+                BeanUtils.copyProperties(skuStandardVO,seckillSkuVO);
+                // 秒杀信息手动赋值
+                seckillSkuVO.setSeckillPrice(sku.getSeckillPrice());
+                seckillSkuVO.setStock(sku.getSeckillStock());
+                seckillSkuVO.setSeckillLimit(sku.getSeckillLimit());
+                // seckillSkuVO保存到Redis
+                redisTemplate.boundValueOps(skuVOKey).set(
+                       seckillSkuVO,
+                        1000*60*5+ RandomUtils.nextInt(30000),
+                        TimeUnit.MILLISECONDS);
             }
+            // if-else结构结束后,seckillSkuVO是一定被赋值的(redis或数据库查询出的)
+            // 要将它添加到seckillSkuVOs这个集合中
+            seckillSkuVOs.add(seckillSkuVO);
         }
-        return null;
+        // 返回集合!!!
+        return seckillSkuVOs;
     }
 }
