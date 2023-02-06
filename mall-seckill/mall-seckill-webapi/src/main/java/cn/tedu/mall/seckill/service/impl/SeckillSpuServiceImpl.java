@@ -14,6 +14,7 @@ import cn.tedu.mall.seckill.utils.SeckillCacheUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.redisson.api.RSet;
 import org.springframework.beans.BeanUtils;
@@ -21,8 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -98,11 +101,49 @@ public class SeckillSpuServiceImpl implements ISeckillSpuService {
                 throw new CoolSharkServiceException(
                         ResponseCode.NOT_FOUND,"您访问的商品不存在");
             }
+            SpuStandardVO spuStandardVO =
+                    dubboSeckillSpuService.getSpuById(spuId);
+            // 将秒杀信息和常规信息都赋值到seckillSpuVO对象
+            // 要先实例化seckillSpuVO对象才能赋值,否则报空指针
+            seckillSpuVO=new SeckillSpuVO();
+            BeanUtils.copyProperties(spuStandardVO,seckillSpuVO);
+            // 手动赋值秒杀信息
+            seckillSpuVO.setSeckillListPrice(seckillSpu.getListPrice());
+            seckillSpuVO.setStartTime(seckillSpu.getStartTime());
+            seckillSpuVO.setEndTime(seckillSpu.getEndTime());
+            // 将seckillSpuVO保存到Redis,以便后续请求直接从Redis中获取
+            redisTemplate.boundValueOps(spuVOKey).set(
+                    seckillSpuVO,
+                    1000*60*5+ RandomUtils.nextInt(30000),
+                    TimeUnit.MILLISECONDS);
         }
-
-
-
-        return null;
+        // 到此为止,seckillSpuVO对象一定是除url之外所有属性都被赋值了
+        // url属性的作用是发送给前端后,前端使用它来向后端发起秒杀订单请求的
+        // 所以我们给url赋值,就相当于允许用户购买当前商品的许可
+        // 要求判断当前时间是否在允许的秒杀时间范围内
+        // 获取当前时间
+        LocalDateTime nowTime=LocalDateTime.now();
+        // 因为再次连接数据库会消耗更多时间,高并发程序要避免不必要的数据库连接
+        // 我们从seckillSpuVO对象中获取开始和结束时间进行判断即可
+        if (seckillSpuVO.getStartTime().isBefore(nowTime) &&
+                nowTime.isBefore(seckillSpuVO.getEndTime())){
+            // 表示当前时间在秒杀时间段内,可以为url赋值
+            // 要获取redis中预热的随机码
+            String randCodeKey=SeckillCacheUtils.getRandCodeKey(spuId);
+            // 判断随机码的key是否在redis中
+            if(!redisTemplate.hasKey(randCodeKey)){
+               // 如果不存在,直接抛异常
+               throw new CoolSharkServiceException(
+                       ResponseCode.NOT_FOUND,"当前随机码不存在");
+            }
+            // 获取随机码
+            String randCode=redisTemplate.boundValueOps(randCodeKey).get()+"";
+            // 将随机码赋值到url
+            seckillSpuVO.setUrl("/seckill/"+randCode);
+            log.info("被赋值的url为:{}",seckillSpuVO.getUrl());
+        }
+        // 千万别忘了返回seckillSpuVO!!!
+        return seckillSpuVO;
     }
 
     @Override
