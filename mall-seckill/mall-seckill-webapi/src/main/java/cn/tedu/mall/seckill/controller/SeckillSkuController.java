@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/seckill/sku")
-@Api(tags = "秒杀sku模块")
+@Api(tags = "秒杀Sku模块")
 public class SeckillSkuController {
 
     @Autowired
