@@ -3,6 +3,7 @@ package cn.tedu.mall.seckill.service.impl;
 import cn.tedu.mall.common.exception.CoolSharkServiceException;
 import cn.tedu.mall.common.restful.JsonPage;
 import cn.tedu.mall.common.restful.ResponseCode;
+import cn.tedu.mall.pojo.product.vo.SpuDetailStandardVO;
 import cn.tedu.mall.pojo.product.vo.SpuStandardVO;
 import cn.tedu.mall.pojo.seckill.model.SeckillSpu;
 import cn.tedu.mall.pojo.seckill.vo.SeckillSpuDetailSimpleVO;
@@ -146,8 +147,38 @@ public class SeckillSpuServiceImpl implements ISeckillSpuService {
         return seckillSpuVO;
     }
 
+    // 项目中没有定义SpuDetail的Key的常量,我们可以自己声明一个
+    public static final String SECKILL_SPU_DETAIL_PREFIX="seckill:spu:detail:";
+
+    // 根据spuId查询spuDetail
     @Override
     public SeckillSpuDetailSimpleVO getSeckillSpuDetail(Long spuId) {
-        return null;
+        String spuDetailKey=SECKILL_SPU_DETAIL_PREFIX+spuId;
+        // 声明一个返回值类型对象
+        SeckillSpuDetailSimpleVO simpleVO=null;
+        // 判断redis中是否包含这个key
+        if(redisTemplate.hasKey(spuDetailKey)){
+            // 如果redis中有这个key
+            simpleVO=(SeckillSpuDetailSimpleVO)
+                        redisTemplate.boundValueOps(spuDetailKey).get();
+        }else{
+            // 如果Redis中不存在这个key
+            // 需要从数据库查询,利用dubbo查询product模块即可
+            SpuDetailStandardVO spuDetailStandardVO =
+                    dubboSeckillSpuService.getSpuDetailById(spuId);
+            // 实例化simpleVO对象
+            simpleVO=new SeckillSpuDetailSimpleVO();
+            BeanUtils.copyProperties(spuDetailStandardVO,simpleVO);
+            // 保存到Redis中
+            redisTemplate.boundValueOps(spuDetailKey).set(
+                    simpleVO,
+                    1000*60*5+RandomUtils.nextInt(30000),
+                    TimeUnit.MILLISECONDS);
+        }
+        // 返回simpleVO
+        return simpleVO;
     }
+
+
+
 }
