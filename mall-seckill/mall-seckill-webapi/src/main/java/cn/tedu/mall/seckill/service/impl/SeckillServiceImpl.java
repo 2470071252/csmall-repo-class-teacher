@@ -4,6 +4,9 @@ import cn.tedu.mall.common.exception.CoolSharkServiceException;
 import cn.tedu.mall.common.pojo.domain.CsmallAuthenticationInfo;
 import cn.tedu.mall.common.restful.ResponseCode;
 import cn.tedu.mall.order.service.IOmsOrderService;
+import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
+import cn.tedu.mall.pojo.order.dto.OrderItemAddDTO;
+import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 import cn.tedu.mall.pojo.seckill.dto.SeckillOrderAddDTO;
 import cn.tedu.mall.pojo.seckill.vo.SeckillCommitVO;
 import cn.tedu.mall.seckill.service.ISeckillService;
@@ -11,11 +14,15 @@ import cn.tedu.mall.seckill.utils.SeckillCacheUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -76,8 +83,54 @@ public class SeckillServiceImpl implements ISeckillService {
             throw new CoolSharkServiceException(
                     ResponseCode.INTERNAL_SERVER_ERROR,"缓存中没有库存信息,购买失败");
         }
-
+        // 下面判断库存数是否允许购买,使用stringRedisTemplate的decrement()方法
+        // 这里的decrement()和increment()向反,效果是能够将key对应的值减1,然后返回
+        Long leftStock=stringRedisTemplate.boundValueOps(skuStockKey).decrement();
+        // leftStock是当前库存数减1之后返回的
+        // 返回0时,表示当前用户购买到了最后一件库存商品
+        // 只有返回值小于0,为负值时,才表示已经没有库存了
+        if(leftStock<0){
+            // 没有库存了,抛出异常终止
+            // 但是要先将用户购买这个商品的记录恢复为0
+            stringRedisTemplate.boundValueOps(reSeckillCheckKey).decrement();
+            throw new CoolSharkServiceException(
+                    ResponseCode.BAD_REQUEST,"对不起您购买的商品暂时售罄");
+        }
+        // 到此为止,用户通过了重复购买和库存数的判断,可以开始生成订单了
+        // 第二阶段:秒杀订单转换成普通订单,需要使用dubbo调用order模块的生成订单方法
+        // 目标是将参数SeckillOrderAddDTO转换成OrderAddDTO
+        // 要观察这两个类的不同,然后编写转换方法完成转换
+        // 转换方法代码较多,需要单独编写一个方法
+        OrderAddDTO orderAddDTO=convertSeckillOrderToOrder(seckillOrderAddDTO);
+        // 完成转换操作,订单的所有属性就都赋值完毕了
+        // 但是userId要单独赋值,前端传入的参数中不会包含userId
+        orderAddDTO.setUserId(userId);
+        // dubbo调用order模块生成订单的方法,完成订单的新增
+        OrderAddVO orderAddVO = dubboOrderService.addOrder(orderAddDTO);
         return null;
+    }
+
+    private OrderAddDTO convertSeckillOrderToOrder(SeckillOrderAddDTO seckillOrderAddDTO) {
+        // 先实例化要返回的对象
+        OrderAddDTO orderAddDTO=new OrderAddDTO();
+        // 将参数seckillOrderAddDTO的同名属性赋值到orderAddDTO
+        BeanUtils.copyProperties(seckillOrderAddDTO,orderAddDTO);
+        // 经过观察两个对象的属性需要我们处理的实际上只有当前包含的订单项信息
+        // 秒杀订单中只有一个SeckillOrderItemAddDTO属性
+        // 常规订单中有一个List泛型是OrderItemAddDTO
+        // 所以我们下面的操作时将SeckillOrderItemAddDTO转换成OrderItemAddDTO,并添加到list集合中
+        OrderItemAddDTO orderItemAddDTO=new OrderItemAddDTO();
+        // 同名属性赋值
+        BeanUtils.copyProperties(seckillOrderAddDTO.getSeckillOrderItemAddDTO(),
+                                    orderItemAddDTO);
+        // 在向最终集合赋值前,先实例化普通订单项的泛型集合
+        List<OrderItemAddDTO> list=new ArrayList<>();
+        // 把赋值好的订单项对象,添加到这个集合中
+        list.add(orderItemAddDTO);
+        // 将集合对象赋值到orderAddDTO对象的orderItems属性中
+        orderAddDTO.setOrderItems(list);
+        // 最后别忘了返回
+        return orderAddDTO;
     }
 
 
