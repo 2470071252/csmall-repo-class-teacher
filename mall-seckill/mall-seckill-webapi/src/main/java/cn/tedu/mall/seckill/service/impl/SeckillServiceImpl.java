@@ -132,6 +132,7 @@ public class SeckillServiceImpl implements ISeckillService {
         SeckillCommitVO commitVO=new SeckillCommitVO();
         BeanUtils.copyProperties(orderAddVO,commitVO);
         // 修改返回值为commitVO
+
         return commitVO;
     }
 
