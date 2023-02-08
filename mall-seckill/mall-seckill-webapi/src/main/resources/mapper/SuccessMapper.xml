@@ -42,7 +42,7 @@
             #{quantity},
             #{barCode},
             #{data},
-            #{orderSn},
+            #{orderSn}
         )
     </insert>
 

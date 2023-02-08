@@ -91,13 +91,13 @@ public class SeckillServiceImpl implements ISeckillService {
         // leftStock是当前库存数减1之后返回的
         // 返回0时,表示当前用户购买到了最后一件库存商品
         // 只有返回值小于0,为负值时,才表示已经没有库存了
-        if(leftStock<0){
+        /*if(leftStock<0){
             // 没有库存了,抛出异常终止
             // 但是要先将用户购买这个商品的记录恢复为0
             stringRedisTemplate.boundValueOps(reSeckillCheckKey).decrement();
             throw new CoolSharkServiceException(
                     ResponseCode.BAD_REQUEST,"对不起您购买的商品暂时售罄");
-        }
+        }*/
         // 到此为止,用户通过了重复购买和库存数的判断,可以开始生成订单了
         // 第二阶段:秒杀订单转换成普通订单,需要使用dubbo调用order模块的生成订单方法
         // 目标是将参数SeckillOrderAddDTO转换成OrderAddDTO
