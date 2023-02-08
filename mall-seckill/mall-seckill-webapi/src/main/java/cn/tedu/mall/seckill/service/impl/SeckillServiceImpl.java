@@ -69,7 +69,7 @@ public class SeckillServiceImpl implements ISeckillService {
         Long seckillTimes=stringRedisTemplate
                 .boundValueOps(reSeckillCheckKey).increment();
         // 如果seckillTimes值大于1,就是用户已经购买过了
-        if(seckillTimes>1){
+        if(seckillTimes>100){
             // 抛出异常,提示不能重复购买,终止程序
             throw new CoolSharkServiceException(
                     ResponseCode.FORBIDDEN,"您已经购买过这个商品了,谢谢您的支持");
