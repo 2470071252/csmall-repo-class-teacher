@@ -8,7 +8,9 @@ import cn.tedu.mall.pojo.order.dto.OrderAddDTO;
 import cn.tedu.mall.pojo.order.dto.OrderItemAddDTO;
 import cn.tedu.mall.pojo.order.vo.OrderAddVO;
 import cn.tedu.mall.pojo.seckill.dto.SeckillOrderAddDTO;
+import cn.tedu.mall.pojo.seckill.model.Success;
 import cn.tedu.mall.pojo.seckill.vo.SeckillCommitVO;
+import cn.tedu.mall.seckill.config.RabbitMqComponentConfiguration;
 import cn.tedu.mall.seckill.service.ISeckillService;
 import cn.tedu.mall.seckill.utils.SeckillCacheUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -107,7 +109,30 @@ public class SeckillServiceImpl implements ISeckillService {
         orderAddDTO.setUserId(userId);
         // dubbo调用order模块生成订单的方法,完成订单的新增
         OrderAddVO orderAddVO = dubboOrderService.addOrder(orderAddDTO);
-        return null;
+        // 第三阶段:使用消息队列(RabbitMQ)将秒杀成功记录信息保存到success表中
+        // 业务要求我们记录秒杀成功的信息,但是它并不需要立即运行,可以由消息队列完成
+        // 我们要创建Success秒杀记录对象,然后将它发送给RabbitMQ
+        Success success=new Success();
+        // Success大部分属性和sku对象相同,可以做同名属性赋值
+        BeanUtils.copyProperties(seckillOrderAddDTO.getSeckillOrderItemAddDTO(),
+                                    success);
+        // 把未赋值的必要信息补全(有些非必要信息已忽略)
+        success.setUserId(userId);
+        success.setSeckillPrice(seckillOrderAddDTO
+                            .getSeckillOrderItemAddDTO().getPrice());
+        success.setOrderSn(orderAddVO.getSn());
+        // success对象赋值完备后,将发送给RabbitMQ
+        rabbitTemplate.convertAndSend(
+                RabbitMqComponentConfiguration.SECKILL_EX,
+                RabbitMqComponentConfiguration.SECKILL_RK,
+                success);
+        // 第四阶段:秒杀订单信息返回
+        // 返回值SeckillCommitVO和提交订单获得的返回值OrderAddVO属性完全一致
+        // 直接把同名属性赋值之后返回即可
+        SeckillCommitVO commitVO=new SeckillCommitVO();
+        BeanUtils.copyProperties(orderAddVO,commitVO);
+        // 修改返回值为commitVO
+        return commitVO;
     }
 
     private OrderAddDTO convertSeckillOrderToOrder(SeckillOrderAddDTO seckillOrderAddDTO) {
