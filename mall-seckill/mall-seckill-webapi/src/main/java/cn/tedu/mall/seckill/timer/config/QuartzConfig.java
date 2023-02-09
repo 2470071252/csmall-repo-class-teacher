@@ -1,5 +1,6 @@
 package cn.tedu.mall.seckill.timer.config;
 
+import cn.tedu.mall.seckill.timer.job.SeckillBloomJob;
 import cn.tedu.mall.seckill.timer.job.SeckillInitialJob;
 import org.quartz.*;
 import org.springframework.context.annotation.Bean;
@@ -25,4 +26,26 @@ public class QuartzConfig {
                 .withSchedule(cron)
                 .build();
     }
+
+    @Bean
+    public JobDetail bloomJobDetail(){
+        return JobBuilder.newJob(SeckillBloomJob.class)
+                .withIdentity("bloomJobDetail")
+                .storeDurably()
+                .build();
+    }
+
+    @Bean
+    public Trigger bloomTrigger(){
+        CronScheduleBuilder cron=
+                CronScheduleBuilder.cronSchedule("0 0/1 * * * ?");
+        return TriggerBuilder.newTrigger()
+                .withSchedule(cron)
+                .forJob(bloomJobDetail())
+                .withIdentity("bloomTrigger")
+                .build();
+    }
+
+
+
 }
